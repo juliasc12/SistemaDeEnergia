@@ -1,13 +1,15 @@
 
 package DAO;
 
-import tarefa4.Principal;
+import CONEXAO.Conexao;
+import VIEW.Principal;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import tarefa4.Conta;
+import MODEL.Conta;
+import java.sql.ResultSet;
 
 public class ContaDAO {
      private String sql;
@@ -23,7 +25,7 @@ public class ContaDAO {
         return instance;
     }
     
-     public static void salvar(Conta conta){
+     public static boolean salvar(Conta conta){
         PreparedStatement ps2;
         try {
             ps2 = Conexao.conexao().prepareStatement("Insert into conta (cod_conta, cod_cliente,vencimento_conta, valor_conta) values (?,?,?,?)");
@@ -35,10 +37,48 @@ public class ContaDAO {
             ps2.executeUpdate();
             
         } catch (SQLException ex) {
-            Logger.getLogger(AgenciaDAO.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(ContaDAO.class.getName()).log(Level.SEVERE, null, ex);
         }
-              
+        return true;        
     }
     
+     public static boolean editar(Conta conta, String aux){
+        try {
+            System.out.println("aux "+ conta.getData());
+            PreparedStatement ps = null;
+            ps = Conexao.conexao().prepareStatement("Update conta set cod_cliente = ?, vencimento_conta=?, valor_conta=? WHERE conta.vencimento_conta=?" );
+                        ps.setString(1, conta.getCliente().getNome());
+                        ps.setString(2, conta.getData());
+                        ps.setInt(3, conta.getValor());
+                        ps.setString(4, aux);
+                        ps.executeUpdate();
+        }catch (SQLException ex) {
+            Logger.getLogger(ContaDAO.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return true;
+    }
+    
+    public boolean excluir(){
+        PreparedStatement ps = null;      
+        ResultSet rs = null;
+        
+        try {
+            ps = Conexao.conexao().prepareStatement("Select * from conta");          
+            rs = ps.executeQuery();
+           
+            while (rs.next()) {
+                 if (rs.getString("vencimento_conta").equals(listaContaAuxDelet.get(0).getData())) {
+                    ps = Conexao.conexao().prepareStatement("Delete from conta Where vencimento_conta = ?");
+                    ps.setString(1, listaContaAuxDelet.get(0).getData());
+                    ps.executeUpdate();      
+                }
+            }        
+        } catch (SQLException e) {
+            System.out.println("Erro ao executar o comando SQL" + e);
+        }
+        
+        return true;
+    }
+     
     
 }
