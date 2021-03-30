@@ -1,4 +1,4 @@
-package tarefa4;
+package DAO;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -11,7 +11,7 @@ public class Conexao {
         String userName = "root";
         String password = "";
         String url = "jdbc:mysql://localhost:3306/energia_eletrica"; 
-        String driver = "com.mysql.jdbc.Driver";
+        //String driver = "org.postgresql.Driver";
 
         try {
             Class.forName("org.gjt.mm.mysql.Driver");

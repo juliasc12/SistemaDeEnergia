@@ -1,17 +1,24 @@
 package tarefa4;
 
+import DAO.AgenciaDAO;
+import DAO.ClienteDAO;
 import java.util.ArrayList;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 
-import tarefa4.Conexao;
+import DAO.Conexao;
+import DAO.ContaDAO;
+import DAO.FuncionarioDAO;
+import DAO.ImovelDAO;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.table.TableModel;
 
 public class Principal extends javax.swing.JFrame {
     ArrayList<Agencia> ListaDep;
@@ -19,6 +26,11 @@ public class Principal extends javax.swing.JFrame {
     ArrayList<Funcionario> ListaFunc;
     ArrayList<Imovel> ListaImovel;
     ArrayList<Conta> ListaConta;
+    ArrayList<Clientes>ListaClienteAuxDelet= new ArrayList<Clientes>();
+    ArrayList<Agencia> listaAgAuxDelet= new ArrayList<Agencia>();
+    ArrayList<Funcionario> listaFuncAuxDelet= new ArrayList<Funcionario>();
+    ArrayList<Imovel> listaImovelAuxDelet= new ArrayList<Imovel>();
+    ArrayList<Conta> listaContaAuxDelet= new ArrayList<Conta>();
     
     String modoDep;
     String modoFunc;
@@ -27,6 +39,25 @@ public class Principal extends javax.swing.JFrame {
     String modoConta;
     Conexao conn;
     
+     public ArrayList returnListaPacAuxDelet (){
+        return ListaClienteAuxDelet;
+    }
+    
+     public ArrayList returnListaAgAuxDelet (){
+        return listaAgAuxDelet;
+    }
+     
+    public ArrayList returnListaFuncAuxDelet (){
+        return listaFuncAuxDelet;
+    }
+    
+    public ArrayList returnlistaImovelAuxDelet (){
+        return listaImovelAuxDelet;
+    }
+    
+     public ArrayList returnlistaContaAuxDelett (){
+        return listaContaAuxDelet;
+    }
     
     public void LoadTableDep(){
         DefaultTableModel modelo = new DefaultTableModel(new Object[]{"Código","Nome"},0);
@@ -1547,9 +1578,20 @@ public class Principal extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void tbl_contaMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tbl_contaMouseClicked
-        // TODO add your handling code here:
+       int index = tbl_conta.getSelectedRow();
+        if(index>=0 && index<ListaConta.size()){
+            Conta D = ListaConta.get(index);
+            c_c_cod.setText(String.valueOf(D.getCodigo()));
+            c_c_venc.setText(D.getData());
+            c_c_valor.setText(String.valueOf(D.getValor()));
+            modoConta= "Selecao";
+                      
+            listaContaAuxDelet.add(0, D);
+            System.out.println("a: "+listaContaAuxDelet.get(0));
+            ManipulaInterfaceConta();
     }//GEN-LAST:event_tbl_contaMouseClicked
-
+    }
+        
     private void c_i_clienteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_c_i_clienteActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_c_i_clienteActionPerformed
@@ -1579,6 +1621,7 @@ public class Principal extends javax.swing.JFrame {
 
             ListaImovel.add(F);
             ListaCliente.get(index-1).addImovel(F);
+            ImovelDAO.salvar(F);
         }
         LoadTableImovel();
         modoFunc = "Navegar";
@@ -1596,6 +1639,30 @@ public class Principal extends javax.swing.JFrame {
         LoadTableImovel();
         modoImovel = "Navegar";
         ManipulaInterfaceImovel();
+        
+        PreparedStatement ps = null;    
+        ResultSet rs = null;
+        
+        try {
+            ps = Conexao.conexao().prepareStatement("Select * from imovel");       
+            rs = ps.executeQuery();
+            
+
+            while (rs.next()) {
+                if (rs.getString("endereco_imovel").equals(listaImovelAuxDelet.get(0).getEndereco())) {
+
+                    ps = Conexao.conexao().prepareStatement("Delete from imovel Where endereco_imovel = ?");
+                    ps.setString(1, listaImovelAuxDelet.get(0).getEndereco());
+                    ps.executeUpdate();
+                             
+                }
+
+            }
+            
+        } catch (SQLException e) {
+            System.out.println("Erro ao executar o comando SQL" + e);
+        }
+        
     }//GEN-LAST:event_btn_i_excluirActionPerformed
 
     private void btn_i_editarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_i_editarActionPerformed
@@ -1620,6 +1687,9 @@ public class Principal extends javax.swing.JFrame {
             c_i_end.setText(D.getEndereco());
             c_i_uc.setText(D.getUC());
             modoImovel = "Selecao";
+                      
+            listaImovelAuxDelet.add(0, D);
+            System.out.println("a: "+listaImovelAuxDelet.get(0));
             ManipulaInterfaceImovel();
         }
     }//GEN-LAST:event_tbl_imovelMouseClicked
@@ -1637,11 +1707,13 @@ public class Principal extends javax.swing.JFrame {
     }//GEN-LAST:event_btn_cl_cancelarActionPerformed
 
     private void btn_cl_salvarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_cl_salvarActionPerformed
+        PreparedStatement ps2 = null;
         int cod = Integer.parseInt(c_cl_cod.getText());
 
         if(verificarCPF(c_cl_cpf.getText())==true){
             if(modoCliente.equals("Novo")){
                 Clientes F = new Clientes(cod, c_cl_nome.getText(), c_cl_cpf.getText(), c_cl_data.getText());
+                ClienteDAO.getInstance().salvar(F);    
                 ListaCliente.add(F);
             }else if(modoCliente.equals("Editar")){
                 int index = tbl_clientes.getSelectedRow();
@@ -1664,19 +1736,63 @@ public class Principal extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_btn_cl_salvarActionPerformed
 
+        
     private void btn_cl_excluirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_cl_excluirActionPerformed
         int index = tbl_clientes.getSelectedRow();
         if(index>=0 && index<ListaCliente.size()){
             ListaCliente.remove(index);
         }
+        
         LoadTableCliente();
         modoCliente = "Navegar";
-        ManipulaInterfaceCliente();
+        ManipulaInterfaceCliente();     
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        
+        try {
+            ps = Conexao.conexao().prepareStatement("Select * from clientes");
+            rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                if (rs.getString("cpf_cliente").equals(ListaClienteAuxDelet.get(0).getCPF())) {
+                    ps = Conexao.conexao().prepareStatement("Delete from clientes Where cpf_cliente = ?");
+                    ps.setString(1, ListaClienteAuxDelet.get(0).getCPF());
+                    ps.executeUpdate();      
+                }
+
+            }
+
+            
+        } catch (SQLException e) {
+            System.out.println("Erro ao executar o comando SQL" + e);
+        }
+        
     }//GEN-LAST:event_btn_cl_excluirActionPerformed
 
     private void btn_cl_editarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_cl_editarActionPerformed
         modoCliente = "Editar";
         ManipulaInterfaceCliente();
+        
+        PreparedStatement ps = null;
+        int cod = Integer.parseInt(c_cl_cod.getText());
+        
+        ResultSet rs = null;
+       
+        try {
+            ps = Conexao.conexao().prepareStatement("Select * from clientes"); 
+            
+            rs = ps.executeQuery();
+            TableModel tabela=tbl_clientes.getModel();
+            Clientes F = new Clientes(cod, c_cl_nome.getText(), c_cl_cpf.getText(), c_cl_data.getText());
+                
+            while (rs.next()) {
+                if (rs.getString("cpf_cliente").equals(ListaClienteAuxDelet.get(0).getCPF())) {
+                    ClienteDAO.getInstance().editar(F,ListaClienteAuxDelet.get(0).getCPF());
+                }
+            }
+            } catch (SQLException e) {
+            System.out.println("Erro ao executar o comando SQL" + e);
+        }
     }//GEN-LAST:event_btn_cl_editarActionPerformed
 
     private void btn_cl_novoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_cl_novoActionPerformed
@@ -1687,12 +1803,15 @@ public class Principal extends javax.swing.JFrame {
     private void tbl_clientesMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tbl_clientesMouseClicked
         int index = tbl_clientes.getSelectedRow();
         if(index>=0 && index<ListaCliente.size()){
-            Clientes D = ListaCliente.get(index);
-            c_cl_cod.setText(String.valueOf(D.getCodigo()));
-            c_cl_nome.setText(D.getNome());
-            c_cl_cpf.setText(D.getCPF());
-            c_cl_data.setText(D.getData());
+            Clientes F = ListaCliente.get(index);
+            c_cl_cod.setText(String.valueOf(F.getCodigo()));
+            c_cl_nome.setText(F.getNome());
+            c_cl_cpf.setText(F.getCPF());
+            c_cl_data.setText(F.getData());
             modoCliente = "Selecao";
+            
+            ListaClienteAuxDelet.add(0,F);
+            System.out.println("a: "+ListaClienteAuxDelet.get(0));
             ManipulaInterfaceCliente();
         }
     }//GEN-LAST:event_tbl_clientesMouseClicked
@@ -1732,6 +1851,9 @@ public class Principal extends javax.swing.JFrame {
 
             ListaFunc.add(F);
             ListaDep.get(index-1).addFunc(F);
+            
+            FuncionarioDAO.getInstance().salvar(F);
+           
         }
         LoadTableFunc();
         modoFunc = "Navegar";
@@ -1746,6 +1868,26 @@ public class Principal extends javax.swing.JFrame {
         LoadTableFunc();
         modoFunc = "Navegar";
         ManipulaInterfaceFunc();
+        
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        
+        try {
+            ps = Conexao.conexao().prepareStatement("Select * from funcionario");         
+            rs = ps.executeQuery();
+ 
+            while (rs.next()) {
+                if (rs.getString("nome_func").equals(listaFuncAuxDelet.get(0).getNome())) {
+
+                    ps = Conexao.conexao().prepareStatement("Delete from funcionario Where nome_func = ?");
+                    ps.setString(1, listaFuncAuxDelet.get(0).getNome());
+                    ps.executeUpdate();                
+                }
+
+            }   
+        } catch (SQLException e) {
+            System.out.println("Erro ao executar o comando SQL" + e);
+        }
     }//GEN-LAST:event_btn_func_excluirActionPerformed
 
     private void tbl_funcMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tbl_funcMouseClicked
@@ -1756,6 +1898,8 @@ public class Principal extends javax.swing.JFrame {
             c_func_nome.setText(D.getNome());
             c_func_salario.setText(String.valueOf(D.getSalario()));
             modoFunc = "Selecao";
+            listaFuncAuxDelet.add(0, D);
+            System.out.println("a: "+ listaFuncAuxDelet.get(0));
             ManipulaInterfaceFunc();
         }
     }//GEN-LAST:event_tbl_funcMouseClicked
@@ -1773,6 +1917,27 @@ public class Principal extends javax.swing.JFrame {
         LoadTableDep();
         modoDep = "Navegar";
         ManipulaInterfaceDep();
+        
+        PreparedStatement ps = null;      
+        ResultSet rs = null;
+        
+        try {
+            ps = Conexao.conexao().prepareStatement("Select * from agencia");          
+            rs = ps.executeQuery();
+           
+            while (rs.next()) {
+                 if (rs.getString("nome_agencia").equals(listaAgAuxDelet.get(0).getNome())) {
+                    ps = Conexao.conexao().prepareStatement("Delete from agencia Where nome_agencia = ?");
+                    ps.setString(1, listaAgAuxDelet.get(0).getNome());
+                    ps.executeUpdate();      
+                }
+            }        
+        } catch (SQLException e) {
+            System.out.println("Erro ao executar o comando SQL" + e);
+        }
+        
+        
+        
     }//GEN-LAST:event_btn_dep_excluirActionPerformed
 
     private void btn_dep_editarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_dep_editarActionPerformed
@@ -1796,22 +1961,15 @@ public class Principal extends javax.swing.JFrame {
     }//GEN-LAST:event_btn_dep_cancelarActionPerformed
 
     private void btn_dep_salvarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_dep_salvarActionPerformed
-        /*
         PreparedStatement ps2 = null;
-        try {
-            ps2 = Conexao.conexao().prepareStatement("Insert into agencia (nome_agencia) values (?)");
-            ps2.setString(1, c_dep_nome.getText());
-            ps2.executeUpdate();
-        } catch (SQLException ex) {
-            System.out.println("erro"+ex);
-        }
-        */
-        
         int cod = Integer.parseInt(c_dep_codigo.getText());
+        
         if(modoDep.equals("Novo")){
             Agencia D = new Agencia(cod, c_dep_nome.getText());
+            AgenciaDAO.getInstance().salvar(D);
             ListaDep.add(D);
-        }else if(modoDep.equals("Editar")){
+        }
+        else if(modoDep.equals("Editar")){
             int index = tbl_dep_dpts.getSelectedRow();
             ListaDep.get(index).setCodigo(cod);
             ListaDep.get(index).setNome(c_dep_nome.getText());
@@ -1835,7 +1993,13 @@ public class Principal extends javax.swing.JFrame {
             c_dep_codigo.setText(String.valueOf(D.getCodigo()));
             c_dep_nome.setText(D.getNome());
             modoDep = "Selecao";
+            
+            listaAgAuxDelet.add(0, D);          
+            System.out.println("a: "+ listaAgAuxDelet.get(0));
+            
             ManipulaInterfaceDep();
+            
+            
         }
     }//GEN-LAST:event_tbl_dep_dptsMouseClicked
 
@@ -1876,6 +2040,7 @@ public class Principal extends javax.swing.JFrame {
 
             ListaConta.add(F);
             ListaCliente.get(index-1).addConta(F);
+            ContaDAO.salvar(F);
         }
         LoadTableConta();
         modoConta = "Navegar";
