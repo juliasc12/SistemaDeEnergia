@@ -1,1 +1,3 @@
-Nesse código eu desenvolvo um sistema de energia na linguagem Java(orientada a objetos!!). É basicamente um CRUD com conexão no banco de dados Mysql. 
+Foi desenvolvido no Netbeans utilizando sua interface, é um sistema desktop.\
+CRUD em Java(orientado a objetos e MVC) com conexão no banco de dados Mysql.\
+Existem 5 tabelas: Agência, Funcionário, Clientes, Contas e Imóveis e as relações entre si.\
